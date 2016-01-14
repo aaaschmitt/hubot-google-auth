@@ -1,29 +1,33 @@
 // Description:
-//   Perform google api oauth with for you hubot
+//   Perform google api oauth for you hubot
 //
 // Dependencies:
 //   google-api-nodejs-client --> npm googleapis
 //   requires a hubot brain
 //
 // Commands:
-//   hubot drive code <code>  
+//   hubot google-auth code <code>  
 //          -  used to authenticate the bot initially (see setCode and generateAuthUrl)
 //
-//   hubot drive tokens  
+//   hubot google-auth tokens  
 //          -  shows the refresh token, access token, and expiration time for the access token
 //
 // Author:
 //  Andrew Schmitt
-
+var google = require('googleapis');
 
 // Make sure that these keys do not conflict with things that are already in your hubot's brain
-var TOKEN_KEY = 'HUBOT_DRIVE_AUTH_TOKEN',
-    REFRESH_KEY = 'HUBOT_DRIVE_REFRESH_TOKEN',
-    EXPIRY_KEY = 'HUBOT_DRIVE_EXPIRE_TIME';
+var TOKEN_KEY = 'GOOGLE_AUTH_TOKEN',
+    REFRESH_KEY = 'GOOGLE_AUTH_REFRESH_TOKEN',
+    EXPIRY_KEY = 'GOOGLE_AUTH_EXPIRE_TIME';
 
-var CLIENT_ID = process.env.DRIVE_CLIENT_ID,
-    CLIENT_SECRET = process.env.DRIVE_CLIENT_SECRET,
-    REDIRECT_URL = process.env.DRIVE_REDIRECT_URL;
+var CLIENT_ID = process.env.HUBOT_GOOGLE_AUTH_CLIENT_ID,
+    CLIENT_SECRET = process.env.HUBOT_GOOGLE_AUTH_CLIENT_SECRET,
+    REDIRECT_URL = process.env.HUBOT_GOOGLE_AUTH_REDIRECT_URL,
+    SCOPES = process.env.HUBOT_GOOGLE_AUTH_SCOPES;
+
+// The object that is exported
+var auth = {};
 
 // Initialize the oauthClient
 var OAuth2 = google.auth.OAuth2;
@@ -38,7 +42,7 @@ google.options({
  *
  * @param  token  the token object returned from google oauth2
  */
-var storeToken = function(token) {
+auth.storeToken = function(token) {
     oauthClient.setCredentials(token);
     robot.brain.set(TOKEN_KEY, token.access_token);
     if (token.refresh_token) {
@@ -54,13 +58,14 @@ var storeToken = function(token) {
  * This requires a user manually inputting a code so it cannot be done by the bot alone.
  * This generates the url where the code can be obtained
  */
-var generateAuthUrl = function() {
-    var scopes = [
-        'https://www.googleapis.com/auth/drive'
-    ];
+auth.generateAuthUrl = function() {
+    if (!SCOPES) {
+        return null;
+    }
+
     var authUrl = oauthClient.generateAuthUrl({
         access_type: 'offline', //offline means that we get a refresh token
-        scope: scopes
+        scope: SCOPES.split(';')
     });
 
     return authUrl;
@@ -72,7 +77,7 @@ var generateAuthUrl = function() {
  *
  * @param  code  the code obtained by a user from the auth url
  */
-var setCode = function(code, cb) {
+auth.setCode = function(code, cb) {
     oauthClient.getToken(code, function(err, token) {
         if (err) {
             console.log(err);
@@ -85,7 +90,7 @@ var setCode = function(code, cb) {
         storeToken(token);
         cb(null, {
             resp: token,
-            msg: "Drive code successfully set"
+            msg: "Google auth code successfully set"
         });
     });
 }
@@ -96,13 +101,19 @@ var setCode = function(code, cb) {
  *
  * @param  cb  the callback function (err, resp), use this to make api calls
  */
-var validateToken = function(cb) {
+auth.validateToken = function(cb) {
     var at = robot.brain.get(TOKEN_KEY),
         rt = robot.brain.get(REFRESH_KEY);
 
     if (at == null || rt == null) {
-        var authMsg = `Authorize this app by visiting this url :\n ${generateAuthUrl()}` +
-            '\nThen use @hubot drive set code <code>';
+        var url = generateAuthUrl();
+        var authMsg;
+        if (!url) {
+            authMsg = 'Please set the HUBOT_GOOGLE_AUTH_SCOPES env variable';
+        } else {
+            authMsg = `Authorize this app by visiting this url :\n ${url}` +
+                '\nThen use @hubot google set code <code>';
+        }
 
         cb({
             err: null,
@@ -119,12 +130,12 @@ var validateToken = function(cb) {
             if (err != null) {
                 cb({
                     err: err,
-                    msg: 'Drive Authentication Error: error refreshing token'
+                    msg: 'Google Authentication Error: error refreshing token'
                 }, null);
                 return;
             }
 
-            storeToken(token);
+            auth.storeToken(token);
             cb(null, {
                 resp: token,
                 msg: 'Token refreshed'
@@ -135,16 +146,33 @@ var validateToken = function(cb) {
     }
 }
 
+/**
+ * Use this object to make api calls
+ * ex: auth.google.drive.get
+ */
+auth.google = google
+
+/**
+ * Returns the current set of tokens
+ */
+auth.getTokens = function() {
+    return {
+        token: robot.brain.get(TOKEN_KEY),
+        refresh_token: robot.brain.get(REFRESH_KEY),
+        expire_date: robot.brain.get(EXPIRY_KEY)
+    }
+}
+
 // Export robot functions (it's still ok to have this required in multiple hubot scripts)
 var initialBrainLoad = true;
 module.exports = function(robot) {
 
-    robot.respond(/drive(\s+set)?\s+code\s+([^\s]+)/i, {
-        id: 'drive.set-code'
+    robot.respond(/google-auth(\s+set)?\s+code\s+([^\s]+)/i, {
+        id: 'google-auth.set-code'
     }, function(msg) {
         var code = msg.match[2];
         msg.send('Attempting to set code...')
-        setCode(code, function(err, resp) {
+        auth.setCode(code, function(err, resp) {
             if (err) {
                 msg.send(err.msg);
                 return;
@@ -154,16 +182,13 @@ module.exports = function(robot) {
         });
     });
 
-    robot.respond(/drive tokens/i, {
-        id: 'drive.show-tokens'
+    robot.respond(/google-auth tokens/i, {
+        id: 'google-auth.show-tokens'
     }, function(msg) {
-        var tok = robot.brain.get(TOKEN_KEY),
-            ref_tok = robot.brain.get(REFRESH_KEY),
-            expire = robot.brain.get(EXPIRY_KEY);
-
-        msg.send('token: ' + tok);
-        msg.send('refresh token: ' + ref_tok);
-        msg.send('expire date: ' + expire);
+        var tokens = auth.getTokens();
+        for (var name in tokens) {
+            msg.send(`name: ${tokens[name]}`);
+        }
     });
 
     // Set credentials on load. Does not validate/refresh tokens

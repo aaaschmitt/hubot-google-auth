@@ -1,0 +1,30 @@
+{
+  "name": "hubot-google-auth",
+  "version": "1.0.0",
+  "description": "Hubot functions and utility functions for authenticating to google apis",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaaschmitt/hubot-google-auth.git"
+  },
+  "keywords": [
+    "hubot",
+    "google",
+    "auth",
+    "drive",
+    "token"
+  ],
+  "author": "Andrew Schmitt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aaaschmitt/hubot-google-auth/issues"
+  },
+  "homepage": "https://github.com/aaaschmitt/hubot-google-auth#readme",
+  "dependencies": {
+    "coffee-script": "^1.10.0",
+    "googleapis": "^2.1.7"
+  }
+}
