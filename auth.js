@@ -39,7 +39,7 @@ HubotGoogleAuth.prototype = {
      * @param  token  the token object returned from google oauth2
      */
     storeToken: function(token) {
-        oauthClient.setCredentials(token);
+        this.oauthClient.setCredentials(token);
         this.brain.set(TOKEN_KEY, token.access_token);
         if (token.refresh_token) {
             this.brain.set(REFRESH_KEY, token.refresh_token);
@@ -56,7 +56,7 @@ HubotGoogleAuth.prototype = {
      */
     generateAuthUrl: function() {
 
-        var authUrl = oauthClient.generateAuthUrl({
+        var authUrl = this.oauthClient.generateAuthUrl({
             access_type: 'offline', //offline means that we get a refresh token
             scope: this.scopes.split(';')
         });
@@ -72,7 +72,7 @@ HubotGoogleAuth.prototype = {
      */
     setCode: function(code, cb) {
         var self = this;
-        oauthClient.getToken(code, function(err, token) {
+        this.oauthClient.getToken(code, function(err, token) {
             if (err) {
                 console.log(err);
                 cb({
@@ -113,7 +113,7 @@ HubotGoogleAuth.prototype = {
 
         var self = this;
         if (expirTime < curTime) {
-            oauthClient.refreshAccessToken(function(err, token) {
+            this.oauthClient.refreshAccessToken(function(err, token) {
                 if (err != null) {
                     cb({
                         err: err,
