@@ -10,7 +10,7 @@ npm install --save hubot-google-auth
 
 ## Configuration
 
-You will need to generate a client\_secret.json file to authenticate via google's oauth2 protocol. Instructions for doing this can be found Generate a client secret.json file by following **step 1** [here](https://developers.google.com/drive/v2/web/quickstart/nodejs).
+You will need to generate a client\_secret.json file to authenticate via google's oauth2 protocol. Instructions for doing this can be found by following **step 1** [here](https://developers.google.com/drive/v2/web/quickstart/nodejs).
 
 Using your client\_secret.json you can initialize the HubotGoogleAuth object like this:
 ```
@@ -23,7 +23,7 @@ auth = new HubotGoogoleAuth ServiceName, CLIENT_ID, CLIENT_SECRET, REDIRECT_URL,
 ```
 
 ## Usage
-Inteneded be be used by hubot scripts to perform google auth by storing api tokens in the brain.  This is useful because it allows you to require this module in several different scripts that need to use google auth (to a particular service that name that is chosen) and they will retrieve and set tokens into the brain when needed.
+Inteneded be be used by hubot scripts to perform google auth by storing api tokens in the brain relative to a certain service name that is provided.  This is useful because it allows you to require this module in several different scripts that need to use google auth and have all of these scripts use the same keys to get and set api tokens from hubots brain.
 
 ## Sample script
 
@@ -42,7 +42,7 @@ module.exports = (robot) ->
 	# We need to initialize the auth client here because it is initialzed with the brain
     auth = new HubotGoogleAuth "GoogleDrive", CLIENT_ID, CLIENT_SECRET, REDIRECT_URL, SCOPES, robot.brain
 
-    # Tokens be null initially
+    # Tokens may be null initially
     tokens = auth.getTokens()
 
     # Google apis are exposed via the google object
