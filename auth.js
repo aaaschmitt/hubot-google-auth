@@ -44,6 +44,7 @@ function HubotGoogleAuth(serviceName, clientId, clientSecret, redirectUrl, scope
     this.oauthClient = client
     this.scopes = scopes;
     this.google = google;
+    this.brain = brain;
 
     // Make sure that these keys do not conflict with things that are already in your hubot's brain
     this.TOKEN_KEY = tok_key;
