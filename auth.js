@@ -55,13 +55,10 @@ HubotGoogleAuth.prototype = {
      * This generates the url where the code can be obtained
      */
     generateAuthUrl: function() {
-        if (!SCOPES) {
-            return null;
-        }
 
         var authUrl = oauthClient.generateAuthUrl({
             access_type: 'offline', //offline means that we get a refresh token
-            scope: SCOPES.split(';')
+            scope: this.scopes.split(';')
         });
 
         return authUrl;
