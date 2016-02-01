@@ -10,9 +10,10 @@ var google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
 
 /**
- * Initialzie the module will all the necessary google information 
+ * Initialize this module with all the necessary google Oauth information 
  * along with the brain of your robot.
- * This module will then store tokens into your robot's brain for you using the keys above.
+ * This module will then store tokens into your robot's brain for you using keys like this:
+ *  <serviceName>_GOOGLE_AUTH_TOKEN .....etc
  *
  * @param  serviceName   the name of google service this client should use. 
  *                       Keys names for the brain are generated based on service name.
@@ -122,7 +123,7 @@ HubotGoogleAuth.prototype = {
      *
      * @param  cb  the callback function (err, resp), use this to make api calls
      */
-    validateToken: function(brain, cb) {
+    validateToken: function(cb) {
         var at = this.brain.get(this.TOKEN_KEY),
             rt = this.brain.get(this.REFRESH_KEY);
 
