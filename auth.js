@@ -102,7 +102,6 @@ HubotGoogleAuth.prototype = {
         var self = this;
         this.oauthClient.getToken(code, function(err, token) {
             if (err) {
-                console.log(err);
                 cb({
                     err: err,
                     msg: 'Error while trying to retrieve access token'
